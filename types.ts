@@ -91,8 +91,8 @@ export type FilmmakerItem = {
 // Types for Auth and API Keys
 export type User = {
   id: string;
-  name: string;
-  email: string;
+  username: string;
+  avatar: string;
 };
 
 export type ApiKey = {

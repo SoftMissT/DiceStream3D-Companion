@@ -17,7 +17,28 @@ export default defineConfig(({ mode }) => {
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.env.SUPABASE_URL': JSON.stringify(env.SUPABASE_URL),
+        'process.env.SUPABASE_SERVICE_KEY': JSON.stringify(env.SUPABASE_SERVICE_KEY),
+        'process.env.TURSO_DATABASE_URL': JSON.stringify(env.TURSO_DATABASE_URL),
+        'process.env.TURSO_AUTH_TOKEN': JSON.stringify(env.TURSO_AUTH_TOKEN),
+        'process.env.CLOUDINARY_CLOUD_NAME': JSON.stringify(env.CLOUDINARY_CLOUD_NAME),
+        'process.env.CLOUDINARY_API_KEY': JSON.stringify(env.CLOUDINARY_API_KEY),
+        'process.env.CLOUDINARY_API_SECRET': JSON.stringify(env.CLOUDINARY_API_SECRET),
+        'process.env.IMAGEKIT_PUBLIC_KEY': JSON.stringify(env.IMAGEKIT_PUBLIC_KEY),
+        'process.env.IMAGEKIT_PRIVATE_KEY': JSON.stringify(env.IMAGEKIT_PRIVATE_KEY),
+        'process.env.IMAGEKIT_URL_ENDPOINT': JSON.stringify(env.IMAGEKIT_URL_ENDPOINT),
+        'process.env.FIREBASE_PROJECT_ID': JSON.stringify(env.FIREBASE_PROJECT_ID),
+        'process.env.FIREBASE_CLIENT_EMAIL': JSON.stringify(env.FIREBASE_CLIENT_EMAIL),
+        'process.env.FIREBASE_PRIVATE_KEY': JSON.stringify(env.FIREBASE_PRIVATE_KEY),
+        'process.env.DISCORD_CLIENT_ID': JSON.stringify(env.DISCORD_CLIENT_ID),
+        'process.env.DISCORD_CLIENT_SECRET': JSON.stringify(env.DISCORD_CLIENT_SECRET),
+        'process.env.DISCORD_REDIRECT_URI': JSON.stringify(env.DISCORD_REDIRECT_URI),
+        'process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL': JSON.stringify(env.GOOGLE_SERVICE_ACCOUNT_EMAIL),
+        'process.env.GOOGLE_PRIVATE_KEY': JSON.stringify(env.GOOGLE_PRIVATE_KEY),
+        'process.env.GOOGLE_SPREADSHEET_ID': JSON.stringify(env.GOOGLE_SPREADSHEET_ID),
+        'process.env.GOOGLE_WHITELIST_SHEET_NAME': JSON.stringify(env.GOOGLE_WHITELIST_SHEET_NAME),
+        'process.env.SECRET_COOKIE_PASSWORD': JSON.stringify(env.SECRET_COOKIE_PASSWORD)
       },
       resolve: {
         alias: {

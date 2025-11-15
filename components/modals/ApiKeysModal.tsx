@@ -1,13 +1,13 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import { TextInput } from '../ui/TextInput';
 import { Button } from '../ui/Button';
 import { SaveIcon, TrashIcon } from '../icons';
-// FIX: Imported useCoreUI to resolve 'Cannot find name' error.
 import { useApiKeys, useAuth, useCoreUI } from '../../contexts/AppContext';
 
-// Placeholder for Toast until it's created
+// Placeholder for Toast until it's created as per original file, since ToastProvider doesn't exist.
 const useToast = () => ({
     showToast: (type: 'success' | 'error' | 'info', message: string) => {
         console.log(`[${type.toUpperCase()}] ${message}`);
@@ -17,22 +17,19 @@ const useToast = () => ({
     }
 });
 
-
-interface ApiKeysModalProps {}
-
-export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
+export const ApiKeysModal: React.FC = () => {
   const { isApiKeysModalOpen, closeApiKeysModal } = useCoreUI();
   const { user } = useAuth();
-  const { 
+  const {
     geminiApiKey, setGeminiApiKey,
     openaiApiKey, setOpenaiApiKey,
-    deepseekApiKey, setDeepseekApiKey 
+    deepseekApiKey, setDeepseekApiKey
   } = useApiKeys();
-  
+
   const [localGemini, setLocalGemini] = useState(geminiApiKey);
   const [localOpenAI, setLocalOpenAI] = useState(openaiApiKey);
   const [localDeepSeek, setLocalDeepSeek] = useState(deepseekApiKey);
-  
+
   const [isSaving, setIsSaving] = useState(false);
   const { showToast } = useToast();
 
@@ -47,16 +44,26 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
   const handleSave = async (keysToSave: { gemini: string; openai: string; deepseek: string; }) => {
     if (!user) {
       showToast('error', 'Você precisa estar logado para salvar as chaves.');
-      return;
+      return false;
     }
-    
+
     setIsSaving(true);
     try {
-      // In a real app, this would be an API call:
-      // const response = await fetch('/api/keys/save', { ... });
-      console.log("Saving keys (simulation):", keysToSave);
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-      
+      const response = await fetch('/api/keys/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          geminiApiKey: keysToSave.gemini || null,
+          openaiApiKey: keysToSave.openai || null,
+          deepseekApiKey: keysToSave.deepseek || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Falha ao salvar as chaves.');
+      }
+
       setGeminiApiKey(keysToSave.gemini);
       setOpenaiApiKey(keysToSave.openai);
       setDeepseekApiKey(keysToSave.deepseek);
@@ -94,9 +101,9 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
     <Modal isOpen={isApiKeysModalOpen} onClose={closeApiKeysModal} title="Gerenciar Chaves de API">
       <div className="space-y-6">
         <p className="text-sm text-text-secondary">
-          Forneça suas chaves para ter <strong>uso ilimitado</strong> e ativar modelos de IA alternativos. Sem sua chave, o uso é limitado e compartilhado. Suas chaves são salvas com segurança e associadas apenas à sua conta.
+          Forneça suas chaves para ter <strong>uso ilimitado</strong> e ativar modelos de IA alternativos. Sem sua chave, o uso é limitado e compartilhado. Suas chaves são salvas com segurança em nosso banco de dados e associadas apenas à sua conta.
         </p>
-        
+
         <div className="space-y-4">
           <div>
             <label htmlFor="gemini-key" className="block text-sm font-medium text-text-secondary mb-1">Google Gemini API Key</label>
@@ -129,7 +136,7 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
             />
           </div>
         </div>
-        
+
         <div className="text-xs text-text-muted">
           <p>Links para obter suas chaves (requer conta nas plataformas):</p>
           <ul className="list-disc list-inside">
@@ -138,9 +145,9 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
             <li><a href="https://platform.deepseek.com/api_keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-accent-end">DeepSeek Platform</a></li>
           </ul>
         </div>
-        
+
         <div className="flex justify-between items-center pt-4 border-t border-border-color">
-            <Button variant="danger" onClick={handleClearKeys} disabled={isSaving}>
+            <Button variant="danger" onClick={handleClearKeys} disabled={isSaving || !user}>
                 <TrashIcon className="w-5 h-5" />
                 Limpar Chaves
             </Button>
@@ -148,7 +155,7 @@ export const ApiKeysModal: React.FC<ApiKeysModalProps> = () => {
                 <Button variant="secondary" onClick={closeApiKeysModal}>
                     Cancelar
                 </Button>
-                <Button onClick={handleSaveClick} disabled={isSaving}>
+                <Button onClick={handleSaveClick} disabled={isSaving || !user}>
                     <SaveIcon className="w-5 h-5" />
                     {isSaving ? 'Salvando...' : 'Salvar Chaves'}
                 </Button>

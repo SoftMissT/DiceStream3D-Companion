@@ -1,5 +1,8 @@
 
-import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
+
+
+
+import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback, useEffect } from 'react';
 import type { View, CharacterItem, TechniqueItem, LocationItem, ConflictItem, MasterToolItem, AlchemistItem, CosmakerItem, FilmmakerItem, User, ApiKey, ForgeItem, FilterState } from '../types';
 import { INITIAL_FILTER_STATE } from '../constants';
 
@@ -85,7 +88,8 @@ export function useCoreUI() {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  login: () => void;
+  authLoading: boolean;
+  handleLoginClick: () => void;
   logout: () => void;
 }
 
@@ -93,12 +97,52 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const isAuthenticated = !!user;
 
-  const login = useCallback(() => setUser({ id: '1', name: 'Tanjiro', email: 'tanjiro@kimetsu.com' }), []);
-  const logout = useCallback(() => setUser(null), []);
+  useEffect(() => {
+    // Check for an existing session on app load.
+    const checkSession = async () => {
+        try {
+            const res = await fetch('/api/user');
+            const data = await res.json();
+            if (data.isLoggedIn) {
+                setUser(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch user session", error);
+        } finally {
+            setAuthLoading(false);
+        }
+    };
+    checkSession();
+  }, []);
 
-  const value = useMemo(() => ({ user, isAuthenticated, login, logout }), [user, isAuthenticated, login, logout]);
+  const handleLoginClick = useCallback(async () => {
+    try {
+        const res = await fetch('/api/auth/discord/url');
+        const data = await res.json();
+        if (data.url) {
+            window.location.href = data.url;
+        } else {
+            throw new Error("Could not get Discord auth URL.");
+        }
+    } catch (error) {
+        console.error("Login failed", error);
+        // Maybe show a toast here in the future
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    try {
+        await fetch('/api/logout');
+        setUser(null);
+    } catch (error) {
+        console.error("Logout failed", error);
+    }
+  }, []);
+
+  const value = useMemo(() => ({ user, isAuthenticated, authLoading, handleLoginClick, logout }), [user, isAuthenticated, authLoading, handleLoginClick, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -127,6 +171,34 @@ export function ApiKeysProvider({ children }: { children: ReactNode }) {
   const [geminiApiKey, setGeminiApiKey] = useState('');
   const [openaiApiKey, setOpenaiApiKey] = useState('');
   const [deepseekApiKey, setDeepseekApiKey] = useState('');
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+      const fetchKeys = async () => {
+          try {
+              const res = await fetch('/api/keys/get');
+              if (res.ok) {
+                  const data = await res.json();
+                  setGeminiApiKey(data.geminiApiKey || '');
+                  setOpenaiApiKey(data.openaiApiKey || '');
+                  setDeepseekApiKey(data.deepseekApiKey || '');
+              } else {
+                  console.error("Failed to fetch API keys");
+              }
+          } catch (error) {
+              console.error("Error fetching API keys:", error);
+          }
+      };
+
+      if (isAuthenticated) {
+          fetchKeys();
+      } else {
+          // Clear keys on logout
+          setGeminiApiKey('');
+          setOpenaiApiKey('');
+          setDeepseekApiKey('');
+      }
+  }, [isAuthenticated]);
   
   const value = useMemo(() => ({ 
     geminiApiKey, setGeminiApiKey,

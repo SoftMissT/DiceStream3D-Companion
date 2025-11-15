@@ -13,6 +13,9 @@ import MasterToolsInterface from './MasterToolsInterface';
 import AlchemistInterface from './AlchemistInterface';
 import CosmakerInterface from './CosmakerInterface';
 import FilmmakerInterface from './FilmmakerInterface';
+import { useAuth } from '../contexts/AppContext';
+import { AuthOverlay } from '../components/AuthOverlay';
+import { VIEWS } from '../constants';
 
 // A map to associate view IDs with their corresponding components
 const viewMap: Record<View, React.ComponentType> = {
@@ -32,7 +35,21 @@ interface ViewRendererProps {
 }
 
 export const ViewRenderer: React.FC<ViewRendererProps> = ({ activeView }) => {
+  const { isAuthenticated, handleLoginClick } = useAuth();
   const ComponentToRender = viewMap[activeView] || viewMap['forge'];
 
-  return <ComponentToRender />;
+  const activeViewData = VIEWS.find(v => v.id === activeView);
+  const viewTitle = activeViewData ? `Acesso à ${activeViewData.label}` : "Acesso Restrito";
+
+  // For this stage, all views are protected.
+  const isProtectedView = true;
+
+  return (
+    <div className="relative flex-grow">
+        <ComponentToRender />
+        {!isAuthenticated && isProtectedView && (
+            <AuthOverlay onLoginClick={handleLoginClick} title={viewTitle} />
+        )}
+    </div>
+  );
 };
