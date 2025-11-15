@@ -9,8 +9,6 @@ interface SwitchProps {
 
 const Switch: React.FC<SwitchProps> = ({ checked, onChange, label }) => {
   const spring = {
-    // FIX: Add 'as const' to ensure TypeScript infers the literal type 'spring' instead of 'string',
-    // which is required by framer-motion's Transition type.
     type: 'spring' as const,
     stiffness: 700,
     damping: 30,

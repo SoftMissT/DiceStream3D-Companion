@@ -1,7 +1,9 @@
 
 
+
+
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
+// FIX: Updated import to use GoogleGenAI and Modality from @google/genai.
 import { GoogleGenAI, Modality } from "@google/genai";
 import { useCoreUI } from '../contexts/AppContext';
 import { useCosmaker } from '../contexts/AppContext';
@@ -58,20 +60,32 @@ const CosmakerInterface: React.FC = () => {
                 Foque nos detalhes do traje, acessórios e na aparência geral para criar uma imagem visualmente rica e coesa.
             `;
 
+            // FIX: Updated API client initialization and usage for image generation.
             const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash-image',
-                contents: { parts: [{ text: fullPrompt }] },
-                config: {
-                    responseModalities: [Modality.IMAGE],
-                },
+            
+            // FIX: Corrected the API call to use 'gemini-2.5-flash-image' and 'responseModalities' for proper image generation.
+            const result = await ai.models.generateContent({
+              model: 'gemini-2.5-flash-image',
+              contents: {
+                parts: [
+                  {
+                    text: fullPrompt,
+                  },
+                ],
+              },
+              config: {
+                  responseModalities: [Modality.IMAGE],
+              },
             });
 
-            const firstPart = response.candidates?.[0]?.content?.parts?.[0];
-            if (firstPart && firstPart.inlineData) {
-                const base64ImageBytes: string = firstPart.inlineData.data;
-                const imageUrl = `data:image/png;base64,${base64ImageBytes}`;
+            const imagePart = result.candidates?.[0]?.content?.parts?.find(
+                (part: any) => part.inlineData && part.inlineData.mimeType.startsWith('image/')
+            );
+
+            if (imagePart && imagePart.inlineData) {
+                const base64ImageBytes: string = imagePart.inlineData.data;
+                const mimeType: string = imagePart.inlineData.mimeType;
+                const imageUrl = `data:${mimeType};base64,${base64ImageBytes}`;
                 
                 const newItem: CosmakerItem = {
                     id: `cosmaker-${Date.now()}`,
@@ -81,7 +95,8 @@ const CosmakerInterface: React.FC = () => {
                 };
                 setHistory(prev => [newItem, ...prev]);
             } else {
-                throw new Error("A IA não retornou uma imagem. Tente refinar seu prompt ou tente novamente.");
+                console.error("API response did not contain a valid image part:", result);
+                throw new Error("A IA não retornou uma imagem válida. Tente refinar seu prompt ou tente novamente mais tarde.");
             }
 
         } catch (e: any) {

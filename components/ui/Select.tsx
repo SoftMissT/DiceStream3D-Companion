@@ -44,7 +44,6 @@ interface SelectProps {
   onChange: (value: SelectOption | null) => void;
   placeholder?: string;
   className?: string;
-  // FIX: Added optional label prop for consistency with other form components.
   label?: string;
 }
 
@@ -54,7 +53,6 @@ const Select: React.FC<SelectProps> = ({ options, value, onChange, placeholder =
   useOnClickOutside(ref, () => setIsOpen(false));
 
   return (
-    // FIX: Wrapped component to include a label, similar to TextInput and TextArea.
     <div className={`w-full ${className}`}>
       {label && <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>}
       <div className="relative" ref={ref}>
@@ -108,7 +106,6 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({ options, value, onC
   );
 
   return (
-    // FIX: Wrapped component to include a label, similar to TextInput and TextArea.
      <div className={`w-full ${className}`}>
         {label && <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>}
         <div className="relative" ref={ref}>
@@ -167,7 +164,6 @@ interface SearchableMultiSelectProps {
   onChange: (value: SelectOption[]) => void;
   placeholder?: string;
   className?: string;
-  // FIX: Added optional label prop for consistency with other form components.
   label?: string;
 }
 
@@ -191,7 +187,6 @@ const SearchableMultiSelect: React.FC<SearchableMultiSelectProps> = ({ options, 
   };
 
   return (
-    // FIX: Wrapped component to include a label, similar to TextInput and TextArea.
      <div className={`w-full ${className}`}>
         {label && <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>}
         <div className="relative" ref={ref}>

@@ -1,7 +1,9 @@
 
 
+
+
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
+// FIX: Updated import to use GoogleGenAI from @google/genai.
 import { GoogleGenAI } from "@google/genai";
 import { useCoreUI, useAlchemy } from '../contexts/AppContext';
 import { FiltersPanel } from './alchemist/FiltersPanel';
@@ -45,9 +47,11 @@ const AlchemistInterface: React.FC = () => {
                 throw new Error("Por favor, insira um prompt e selecione um modelo de IA.");
             }
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-            
-            const response = await ai.models.generateContent({
+            // FIX: Updated API client initialization and usage to follow current @google/genai guidelines.
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+
+            // FIX: Refactored generateContent call to use the modern SDK structure.
+            const result = await ai.models.generateContent({
                 model: filters.model.value as string,
                 contents: filters.prompt,
                 config: {
@@ -55,10 +59,11 @@ const AlchemistInterface: React.FC = () => {
                     temperature: filters.temperature,
                     topP: filters.topP,
                     topK: filters.topK,
-                },
+                }
             });
-
-            const textResponse = response.text;
+            
+            // FIX: Used the .text accessor for a direct response.
+            const textResponse = result.text;
             if (!textResponse) {
                 throw new Error("A IA não retornou uma resposta.");
             }

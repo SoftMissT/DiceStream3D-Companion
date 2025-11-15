@@ -1,8 +1,10 @@
 
 
+
+
 import React, { useState, useCallback, useEffect } from 'react';
-// FIX: Corrected the import to use the official package and class name.
-import { GoogleGenAI } from "@google/genai";
+// FIX: Updated import to use GoogleGenAI and Type from @google/genai.
+import { GoogleGenAI, Type } from "@google/genai";
 import { useCoreUI, useCharacters } from '../contexts/AppContext';
 import { FiltersPanel } from './characters/FiltersPanel';
 import { ResultsPanel } from './characters/ResultsPanel';
@@ -71,24 +73,28 @@ const CharactersInterface: React.FC = () => {
               Gere um personagem completo, incluindo nome, aparência, personalidade detalhada, história de fundo (backstory) e uma descrição de suas habilidades.
             `;
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            // FIX: Updated API client initialization and usage to follow current @google/genai guidelines.
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
             
             const responseSchema = {
-                type: 'OBJECT',
+                // FIX: Used Type.OBJECT enum instead of string 'OBJECT'.
+                type: Type.OBJECT,
                 properties: {
-                    name: { type: 'STRING', description: 'Um nome japonês completo e apropriado para o personagem.' },
-                    affiliation: { type: 'STRING', description: 'A afiliação do personagem (Ex: Caçador de Onis).' },
-                    rank: { type: 'STRING', description: 'A classe ou nível do personagem (Ex: Hashira, Lua Superior).' },
-                    appearance: { type: 'STRING', description: 'Uma descrição detalhada da aparência física e vestimentas do personagem.' },
-                    personality: { type: 'STRING', description: 'Uma descrição aprofundada da personalidade, motivações e medos do personagem.' },
-                    backstory: { type: 'STRING', description: 'Uma história de fundo concisa, mas impactante, para o personagem.' },
-                    abilities: { type: 'STRING', description: `Uma descrição detalhada das habilidades, incluindo a ${filters.affiliation.value === 'demon' ? 'Arte Demoníaca de Sangue' : 'Técnica de Respiração'}.` }
+                    // FIX: Used Type.STRING enum for all properties.
+                    name: { type: Type.STRING, description: 'Um nome japonês completo e apropriado para o personagem.' },
+                    affiliation: { type: Type.STRING, description: 'A afiliação do personagem (Ex: Caçador de Onis).' },
+                    rank: { type: Type.STRING, description: 'A classe ou nível do personagem (Ex: Hashira, Lua Superior).' },
+                    appearance: { type: Type.STRING, description: 'Uma descrição detalhada da aparência física e vestimentas do personagem.' },
+                    personality: { type: Type.STRING, description: 'Uma descrição aprofundada da personalidade, motivações e medos do personagem.' },
+                    backstory: { type: Type.STRING, description: 'Uma história de fundo concisa, mas impactante, para o personagem.' },
+                    abilities: { type: Type.STRING, description: `Uma descrição detalhada das habilidades, incluindo a ${filters.affiliation.value === 'demon' ? 'Arte Demoníaca de Sangue' : 'Técnica de Respiração'}.` }
                 },
                 required: ['name', 'affiliation', 'rank', 'appearance', 'personality', 'backstory', 'abilities']
             };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            // FIX: Refactored generateContent call to use the modern SDK structure.
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: fullPrompt,
                 config: {
                     responseMimeType: "application/json",
@@ -97,7 +103,9 @@ const CharactersInterface: React.FC = () => {
                 }
             });
 
-            const parsedResponse = JSON.parse(response.text);
+            // FIX: Used the .text accessor for a direct response.
+            const textResponse = result.text;
+            const parsedResponse = JSON.parse(textResponse);
 
             const newItem: CharacterItem = {
                 id: `char-${Date.now()}`,

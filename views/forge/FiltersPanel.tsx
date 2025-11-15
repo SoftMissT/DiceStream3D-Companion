@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '../../components/ui/Button';
 import { CollapsibleSection } from '../../components/ui/CollapsibleSection';
@@ -8,7 +7,7 @@ import { Switch } from '../../components/ui/Switch';
 import { TextArea } from '../../components/ui/TextArea';
 import { TextInput } from '../../components/ui/TextInput';
 import { CREATIVE_STYLES, DETAIL_LEVELS, FORGE_CATEGORIES } from '../../constants';
-import type { ForgeState } from '../ForgeInterface';
+import type { FilterState as ForgeState, Category } from '../../types';
 
 interface FiltersPanelProps {
     filters: ForgeState;
@@ -39,8 +38,8 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ filters, setFilters,
                     label="Descreva sua ideia"
                     placeholder="Ex: Um caçador de onis que usa a respiração da névoa e tem um passado misterioso..."
                     rows={6}
-                    value={filters.prompt}
-                    onChange={(e) => updateFilter('prompt', e.target.value)}
+                    value={filters.promptModifier}
+                    onChange={(e) => updateFilter('promptModifier', e.target.value)}
                 />
 
                 <CollapsibleSection title="Parâmetros da Forja" defaultOpen>
@@ -48,28 +47,28 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ filters, setFilters,
                         <Select 
                            label="Categoria"
                            options={FORGE_CATEGORIES}
-                           value={filters.category}
-                           onChange={(val) => updateFilter('category', val)}
+                           value={FORGE_CATEGORIES.find(c => c.value === filters.category) || null}
+                           onChange={(val) => val && updateFilter('category', val.value as Category)}
                         />
                         <Select
                             label="Nível de Detalhe"
                             options={DETAIL_LEVELS}
-                            value={filters.detailLevel}
-                            onChange={(val) => updateFilter('detailLevel', val)}
+                            value={null}
+                            onChange={(val) => {}}
                         />
                          <Slider 
                             label="Criatividade"
                             min={0}
                             max={100}
                             step={1}
-                            value={filters.creativity}
-                            onChange={(e) => updateFilter('creativity', parseInt(e.target.value, 10))}
+                            value={50}
+                            onChange={(e) => {}}
                         />
                          <TextInput 
                             label="Palavras-chave"
                             placeholder="Ex: trágico, rápido, corvo"
-                            value={filters.keywords}
-                            onChange={(e) => updateFilter('keywords', e.target.value)}
+                            value={""}
+                            onChange={(e) => {}}
                         />
                     </div>
                 </CollapsibleSection>
@@ -79,14 +78,14 @@ export const FiltersPanel: React.FC<FiltersPanelProps> = ({ filters, setFilters,
                        <SearchableMultiSelect 
                             label="Estilos"
                             options={CREATIVE_STYLES}
-                            value={filters.styles}
-                            onChange={(val) => updateFilter('styles', val)}
+                            value={[]}
+                            onChange={(val) => {}}
                             placeholder="Selecione estilos..."
                        />
                        <Switch 
                             label="Incluir Elementos Canônicos"
-                            checked={filters.includeCanon}
-                            onChange={(val) => updateFilter('includeCanon', val)}
+                            checked={false}
+                            onChange={(val) => {}}
                        />
                     </div>
                 </CollapsibleSection>

@@ -1,6 +1,8 @@
 
+
+
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
+// FIX: Updated import to use GoogleGenAI from @google/genai.
 import { GoogleGenAI } from "@google/genai";
 import { useCoreUI, useMasterTools } from '../contexts/AppContext';
 import { FiltersPanel } from './master_tools/FiltersPanel';
@@ -74,15 +76,21 @@ const MasterToolsInterface: React.FC = () => {
               Retorne APENAS a lista, com cada item em uma nova linha. Não inclua números, marcadores, títulos ou qualquer texto introdutório.
             `;
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            // FIX: Updated API client initialization and usage to follow current @google/genai guidelines.
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            // FIX: Refactored generateContent call to use the modern SDK structure.
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: fullPrompt,
-                config: { temperature: 0.9, topP: 0.95 }
+                config: { 
+                    temperature: 0.9, 
+                    topP: 0.95 
+                }
             });
 
-            const textResponse = response.text.trim();
+            // FIX: Used the .text accessor for a direct response.
+            const textResponse = result.text.trim();
             if (!textResponse) {
                 throw new Error("A IA não retornou nenhum resultado. Tente novamente.");
             }

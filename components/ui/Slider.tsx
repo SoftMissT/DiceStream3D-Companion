@@ -30,7 +30,6 @@ const Slider: React.FC<SliderProps> = ({ label, value, className, ...props }) =>
             style={style}
             {...props}
         />
-        {/* FIX: Removed the 'jsx' prop from the style tag to fix the TypeScript error. */}
         <style>{`
             .slider-thumb::-webkit-slider-thumb {
                 -webkit-appearance: none;

@@ -80,3 +80,82 @@ export type CosmakerItem = {
   imageUrl: string; // Base64 data URL
   isFavorite?: boolean;
 };
+
+export type FilmmakerItem = {
+  id: string;
+  prompt: string;
+  description: string;
+  isFavorite?: boolean;
+};
+
+// Types for Auth and API Keys
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+
+export type ApiKey = {
+  id: string;
+  key: string;
+  name: string;
+};
+
+// Type for the main "Forge" view
+export type ForgeItem = {
+  id: string;
+  name: string;
+  content: string;
+  isFavorite?: boolean;
+};
+
+// NEW: Unified types for the new FilterPanel
+export type Category =
+  | 'Arma'
+  | 'Acessório'
+  | 'Caçador'
+  | 'Inimigo/Oni'
+  | 'Kekkijutsu'
+  | 'Respiração'
+  | 'Missões'
+  | 'NPC'
+  | 'Evento'
+  | 'Local/Cenário'
+  | 'Mitologia'
+  | 'História Antiga'
+  | 'Guerra de Clãs';
+
+export type Rarity = 'Comum' | 'Incomum' | 'Rara' | 'Épica' | 'Lendária';
+export type Tematica = string;
+
+export interface FilterState {
+  category: Category;
+  rarity: Rarity | 'Aleatória';
+  level: number;
+  quantity: number;
+  promptModifier: string;
+  thematics: Tematica[];
+  country: string;
+  era: string;
+  tonalidade: string;
+  weaponType?: string;
+  metal?: string;
+  bladeColor?: string;
+  hunterClass?: string;
+  hunterOrigin?: string;
+  breathingStyle?: string;
+  specialAbility?: string;
+  fightingStyle?: string;
+  profession?: string;
+  kekkijutsuInspiration?: string;
+  oniOrigin?: string;
+  oniClass?: string;
+  missionType?: string;
+  terrainType?: string;
+  eventType?: string;
+  attackingClan?: string;
+  defendingClan?: string;
+  armySize?: number;
+  battleTerrain?: string;
+  battleStrategy?: string;
+}

@@ -1,8 +1,10 @@
 
 
+
+
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
-import { GoogleGenAI } from "@google/genai";
+// FIX: Updated import to use GoogleGenAI and Type from @google/genai.
+import { GoogleGenAI, Type } from "@google/genai";
 import { useCoreUI, useTechniques } from '../contexts/AppContext';
 import { FiltersPanel } from './techniques/FiltersPanel';
 import { ResultsPanel } from './techniques/ResultsPanel';
@@ -60,21 +62,25 @@ const TechniquesInterface: React.FC = () => {
               ${notableUserText}
             `;
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            // FIX: Updated API client initialization and usage to follow current @google/genai guidelines.
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
             
             const responseSchema = {
-                type: 'OBJECT',
+                // FIX: Used Type.OBJECT enum instead of string 'OBJECT'.
+                type: Type.OBJECT,
                 properties: {
-                    name: { type: 'STRING', description: 'Um nome poético e impactante para a técnica em português (Ex: Respiração da Geada, Arte Demoníaca da Marionete de Sangue).' },
-                    type: { type: 'STRING', description: 'O tipo da técnica (Ex: Técnica de Respiração ou Arte Demoníaca de Sangue).' },
-                    baseElement: { type: 'STRING', description: 'O elemento ou conceito fundamental da técnica (Ex: Geada, Marionete de Sangue).' },
-                    description: { type: 'STRING', description: `Uma descrição detalhada da técnica, suas capacidades, e cada uma de suas formas, conforme a complexidade solicitada. ${notableUserText}` },
+                    // FIX: Used Type.STRING enum for all properties.
+                    name: { type: Type.STRING, description: 'Um nome poético e impactante para a técnica em português (Ex: Respiração da Geada, Arte Demoníaca da Marionete de Sangue).' },
+                    type: { type: Type.STRING, description: 'O tipo da técnica (Ex: Técnica de Respiração ou Arte Demoníaca de Sangue).' },
+                    baseElement: { type: Type.STRING, description: 'O elemento ou conceito fundamental da técnica (Ex: Geada, Marionete de Sangue).' },
+                    description: { type: Type.STRING, description: `Uma descrição detalhada da técnica, suas capacidades, e cada uma de suas formas, conforme a complexidade solicitada. ${notableUserText}` },
                 },
                 required: ['name', 'type', 'baseElement', 'description']
             };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            // FIX: Refactored generateContent call to use the modern SDK structure.
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: fullPrompt,
                 config: {
                     responseMimeType: "application/json",
@@ -83,7 +89,9 @@ const TechniquesInterface: React.FC = () => {
                 }
             });
 
-            const parsedResponse = JSON.parse(response.text);
+            // FIX: Used the .text accessor for a direct response.
+            const textResponse = result.text;
+            const parsedResponse = JSON.parse(textResponse);
 
             const newItem: TechniqueItem = {
                 id: `tech-${Date.now()}`,

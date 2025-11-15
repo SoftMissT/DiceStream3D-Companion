@@ -1,20 +1,13 @@
 
-
-
 import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
-import type { View, CharacterItem, TechniqueItem, LocationItem, ConflictItem, MasterToolItem, AlchemistItem, CosmakerItem } from '../types';
-
-// Placeholder types for context states
-type User = { id: string; name: string; email: string };
-type ApiKey = { id: string; key: string; name: string };
-export type ForgeItem = { id: string; name: string; content: string, isFavorite?: boolean };
-type ForgeFilters = { [key: string]: any };
+import type { View, CharacterItem, TechniqueItem, LocationItem, ConflictItem, MasterToolItem, AlchemistItem, CosmakerItem, FilmmakerItem, User, ApiKey, ForgeItem, FilterState } from '../types';
+import { INITIAL_FILTER_STATE } from '../constants';
 
 // --- CoreUI Context ---
 interface CoreUIContextType {
   activeView: View;
   setActiveView: (view: View) => void;
-  selectedItem: any | null; // Generic item for the modal
+  selectedItem: any | null;
   isDetailModalOpen: boolean;
   openDetailModal: (item: any) => void;
   closeDetailModal: () => void;
@@ -33,7 +26,6 @@ interface CoreUIContextType {
 
 const CoreUIContext = createContext<CoreUIContextType | undefined>(undefined);
 
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function CoreUIProvider({ children }: { children: ReactNode }) {
   const [activeView, setActiveView] = useState<View>('forge');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
@@ -43,19 +35,19 @@ export function CoreUIProvider({ children }: { children: ReactNode }) {
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Using useCallback for stable function references
   const openDetailModal = useCallback((item: any) => {
     setSelectedItem(item);
     setDetailModalOpen(true);
   }, []);
+  
   const closeDetailModal = useCallback(() => {
     setDetailModalOpen(false);
     setSelectedItem(null);
   }, []);
+  
   const openAboutModal = useCallback(() => setAboutModalOpen(true), []);
   const closeAboutModal = useCallback(() => setAboutModalOpen(false), []);
   const openApiKeysModal = useCallback(() => setApiKeysModalOpen(true), []);
-  // FIX: Added 'const' to declare the `closeApiKeysModal` function.
   const closeApiKeysModal = useCallback(() => setApiKeysModalOpen(false), []);
 
   const value = useMemo(() => ({
@@ -79,11 +71,13 @@ export function CoreUIProvider({ children }: { children: ReactNode }) {
   }), [activeView, selectedItem, isDetailModalOpen, isAboutModalOpen, isApiKeysModalOpen, isLoading, error, openDetailModal, closeDetailModal, openAboutModal, closeAboutModal, openApiKeysModal, closeApiKeysModal]);
 
   return <CoreUIContext.Provider value={value}>{children}</CoreUIContext.Provider>;
-};
+}
 
-export const useCoreUI = () => {
+export function useCoreUI() {
   const context = useContext(CoreUIContext);
-  if (!context) throw new Error('useCoreUI must be used within a CoreUIProvider');
+  if (!context) {
+    throw new Error('useCoreUI must be used within a CoreUIProvider');
+  }
   return context;
 };
 
@@ -97,7 +91,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const isAuthenticated = !!user;
@@ -108,55 +101,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ user, isAuthenticated, login, logout }), [user, isAuthenticated, login, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };
 
-
 // --- ApiKeys Context ---
 interface ApiKeysContextType {
-  apiKeys: ApiKey[];
-  activeApiKey: ApiKey | null;
-  addApiKey: (key: Omit<ApiKey, 'id'>) => void;
-  setActiveApiKey: (id: string) => void;
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
+  openaiApiKey: string;
+  setOpenaiApiKey: (key: string) => void;
+  deepseekApiKey: string;
+  setDeepseekApiKey: (key: string) => void;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextType | undefined>(undefined);
 
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function ApiKeysProvider({ children }: { children: ReactNode }) {
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [activeApiKey, setActiveApiKeyState] = useState<ApiKey | null>(null);
-
-  const addApiKey = useCallback((key: Omit<ApiKey, 'id'>) => {
-    const newKey = { ...key, id: Date.now().toString() };
-    setApiKeys(prev => [...prev, newKey]);
-  }, []);
-
-  const setActiveApiKey = useCallback((id: string) => {
-    const key = apiKeys.find(k => k.id === id) || null;
-    setActiveApiKeyState(key);
-  }, [apiKeys]);
+  const [geminiApiKey, setGeminiApiKey] = useState('');
+  const [openaiApiKey, setOpenaiApiKey] = useState('');
+  const [deepseekApiKey, setDeepseekApiKey] = useState('');
   
-  const value = useMemo(() => ({ apiKeys, activeApiKey, addApiKey, setActiveApiKey }), [apiKeys, activeApiKey, addApiKey, setActiveApiKey]);
+  const value = useMemo(() => ({ 
+    geminiApiKey, setGeminiApiKey,
+    openaiApiKey, setOpenaiApiKey,
+    deepseekApiKey, setDeepseekApiKey,
+  }), [geminiApiKey, openaiApiKey, deepseekApiKey]);
 
   return <ApiKeysContext.Provider value={value}>{children}</ApiKeysContext.Provider>;
-};
+}
 
-export const useApiKeys = () => {
+export function useApiKeys() {
   const context = useContext(ApiKeysContext);
-  if (!context) throw new Error('useApiKeys must be used within an ApiKeysProvider');
+  if (!context) {
+    throw new Error('useApiKeys must be used within an ApiKeysProvider');
+  }
   return context;
 };
 
 // --- Forge Context ---
 interface ForgeContextType {
-  filters: ForgeFilters;
-  setFilters: (filters: ForgeFilters) => void;
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
   history: ForgeItem[];
   setHistory: React.Dispatch<React.SetStateAction<ForgeItem[]>>;
   favorites: ForgeItem[];
@@ -165,9 +157,8 @@ interface ForgeContextType {
 
 const ForgeContext = createContext<ForgeContextType | undefined>(undefined);
 
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function ForgeProvider({ children }: { children: ReactNode }) {
-    const [filters, setFilters] = useState<ForgeFilters>({});
+    const [filters, setFilters] = useState<FilterState>(INITIAL_FILTER_STATE);
     const [history, setHistory] = useState<ForgeItem[]>([]);
     const [favorites, setFavorites] = useState<ForgeItem[]>([]);
 
@@ -194,9 +185,11 @@ export function ForgeProvider({ children }: { children: ReactNode }) {
     
     return <ForgeContext.Provider value={value}>{children}</ForgeContext.Provider>;
 }
-export const useForge = () => {
+export function useForge() {
     const context = useContext(ForgeContext);
-    if (!context) throw new Error('useForge must be used within a ForgeProvider');
+    if (!context) {
+      throw new Error('useForge must be used within a ForgeProvider');
+    }
     return context;
 }
 
@@ -235,9 +228,11 @@ export function ConflictsProvider({ children }: { children: ReactNode }) {
     
     return <ConflictsContext.Provider value={value}>{children}</ConflictsContext.Provider>;
 }
-export const useConflicts = () => {
+export function useConflicts() {
     const context = useContext(ConflictsContext);
-    if (!context) throw new Error('useConflicts must be used within a ConflictsProvider');
+    if (!context) {
+      throw new Error('useConflicts must be used within a ConflictsProvider');
+    }
     return context;
 }
 
@@ -277,9 +272,11 @@ export function CharactersProvider({ children }: { children: ReactNode }) {
     
     return <CharactersContext.Provider value={value}>{children}</CharactersContext.Provider>;
 }
-export const useCharacters = () => {
+export function useCharacters() {
     const context = useContext(CharactersContext);
-    if (!context) throw new Error('useCharacters must be used within a CharactersProvider');
+    if (!context) {
+      throw new Error('useCharacters must be used within a CharactersProvider');
+    }
     return context;
 }
 
@@ -318,9 +315,11 @@ export function TechniquesProvider({ children }: { children: ReactNode }) {
     
     return <TechniquesContext.Provider value={value}>{children}</TechniquesContext.Provider>;
 }
-export const useTechniques = () => {
+export function useTechniques() {
     const context = useContext(TechniquesContext);
-    if (!context) throw new Error('useTechniques must be used within a TechniquesProvider');
+    if (!context) {
+      throw new Error('useTechniques must be used within a TechniquesProvider');
+    }
     return context;
 }
 
@@ -359,9 +358,11 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     
     return <LocationsContext.Provider value={value}>{children}</LocationsContext.Provider>;
 }
-export const useLocations = () => {
+export function useLocations() {
     const context = useContext(LocationsContext);
-    if (!context) throw new Error('useLocations must be used within a LocationsProvider');
+    if (!context) {
+      throw new Error('useLocations must be used within a LocationsProvider');
+    }
     return context;
 }
 
@@ -400,9 +401,11 @@ export function MasterToolsProvider({ children }: { children: ReactNode }) {
 
     return <MasterToolsContext.Provider value={value}>{children}</MasterToolsContext.Provider>;
 }
-export const useMasterTools = () => {
+export function useMasterTools() {
     const context = useContext(MasterToolsContext);
-    if (!context) throw new Error('useMasterTools must be used within a MasterToolsProvider');
+    if (!context) {
+      throw new Error('useMasterTools must be used within a MasterToolsProvider');
+    }
     return context;
 }
 
@@ -415,7 +418,6 @@ interface AlchemyContextType {
   toggleFavorite: (item: AlchemistItem) => void;
 }
 const AlchemyContext = createContext<AlchemyContextType | undefined>(undefined);
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function AlchemyProvider({ children }: { children: ReactNode }) {
     const [history, setHistory] = useState<AlchemistItem[]>([]);
     const [favorites, setFavorites] = useState<AlchemistItem[]>([]);
@@ -435,9 +437,11 @@ export function AlchemyProvider({ children }: { children: ReactNode }) {
     const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
     return <AlchemyContext.Provider value={value}>{children}</AlchemyContext.Provider>;
 }
-export const useAlchemy = () => {
+export function useAlchemy() {
     const context = useContext(AlchemyContext);
-    if (!context) throw new Error('useAlchemy must be used within an AlchemyProvider');
+    if (!context) {
+      throw new Error('useAlchemy must be used within an AlchemyProvider');
+    }
     return context;
 }
 
@@ -468,9 +472,46 @@ export function CosmakerProvider({ children }: { children: ReactNode }) {
     const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
     return <CosmakerContext.Provider value={value}>{children}</CosmakerContext.Provider>;
 }
-export const useCosmaker = () => {
+export function useCosmaker() {
     const context = useContext(CosmakerContext);
-    if (!context) throw new Error('useCosmaker must be used within a CosmakerProvider');
+    if (!context) {
+      throw new Error('useCosmaker must be used within a CosmakerProvider');
+    }
+    return context;
+}
+
+// --- Filmmaker Context ---
+interface FilmmakerContextType {
+  history: FilmmakerItem[];
+  setHistory: React.Dispatch<React.SetStateAction<FilmmakerItem[]>>;
+  favorites: FilmmakerItem[];
+  toggleFavorite: (item: FilmmakerItem) => void;
+}
+const FilmmakerContext = createContext<FilmmakerContextType | undefined>(undefined);
+export function FilmmakerProvider({ children }: { children: ReactNode }) {
+    const [history, setHistory] = useState<FilmmakerItem[]>([]);
+    const [favorites, setFavorites] = useState<FilmmakerItem[]>([]);
+
+    const toggleFavorite = useCallback((itemToToggle: FilmmakerItem) => {
+      setFavorites(prev => {
+        const isFavorite = prev.some(item => item.id === itemToToggle.id);
+        if (isFavorite) {
+          return prev.filter(item => item.id !== itemToToggle.id);
+        } else {
+          return [...prev, { ...itemToToggle, isFavorite: true }];
+        }
+      });
+      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
+    }, []);
+
+    const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
+    return <FilmmakerContext.Provider value={value}>{children}</FilmmakerContext.Provider>;
+}
+export function useFilmmaker() {
+    const context = useContext(FilmmakerContext);
+    if (!context) {
+      throw new Error('useFilmmaker must be used within a FilmmakerProvider');
+    }
     return context;
 }
 
@@ -483,7 +524,6 @@ interface UsageContextType {
   incrementUsage: () => void;
 }
 const UsageContext = createContext<UsageContextType | undefined>(undefined);
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function UsageProvider({ children }: { children: ReactNode }) {
     const [dailyUsage, setDailyUsage] = useState(0);
     const usageLimit = 100;
@@ -492,15 +532,16 @@ export function UsageProvider({ children }: { children: ReactNode }) {
     const value = useMemo(() => ({ dailyUsage, usageLimit, isLimitReached, incrementUsage }), [dailyUsage, usageLimit, isLimitReached, incrementUsage]);
     return <UsageContext.Provider value={value}>{children}</UsageContext.Provider>;
 }
-export const useUsage = () => {
+export function useUsage() {
     const context = useContext(UsageContext);
-    if (!context) throw new Error('useUsage must be used within a UsageProvider');
+    if (!context) {
+      throw new Error('useUsage must be used within a UsageProvider');
+    }
     return context;
 }
 
 
 // --- AppProvider (Composer) ---
-// FIX: Changed from const arrow function to a function declaration to aid TypeScript's type inference.
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <CoreUIProvider>
@@ -514,9 +555,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
                     <MasterToolsProvider>
                       <AlchemyProvider>
                         <CosmakerProvider>
-                          <UsageProvider>
-                            {children}
-                          </UsageProvider>
+                            <FilmmakerProvider>
+                                <UsageProvider>
+                                    {children}
+                                </UsageProvider>
+                            </FilmmakerProvider>
                         </CosmakerProvider>
                       </AlchemyProvider>
                     </MasterToolsProvider>
@@ -529,4 +572,4 @@ export function AppProvider({ children }: { children: ReactNode }) {
       </AuthProvider>
     </CoreUIProvider>
   );
-};
+}

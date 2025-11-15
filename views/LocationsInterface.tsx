@@ -1,8 +1,10 @@
 
 
+
+
 import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
-import { GoogleGenAI } from "@google/genai";
+// FIX: Updated import to use GoogleGenAI and Type from @google/genai.
+import { GoogleGenAI, Type } from "@google/genai";
 import { useCoreUI, useLocations } from '../contexts/AppContext';
 import { FiltersPanel } from './locations/FiltersPanel';
 import { ResultsPanel } from './locations/ResultsPanel';
@@ -57,22 +59,26 @@ const LocationsInterface: React.FC = () => {
               ${pointsOfInterestText}
             `;
 
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            // FIX: Updated API client initialization and usage to follow current @google/genai guidelines.
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
             
             const responseSchema = {
-                type: 'OBJECT',
+                // FIX: Used Type.OBJECT enum instead of string 'OBJECT'.
+                type: Type.OBJECT,
                 properties: {
-                    name: { type: 'STRING', description: 'Um nome evocativo e apropriado para o local em português (Ex: Floresta do Eco Sussurrante, Vila da Cerejeira de Ferro).' },
-                    biome: { type: 'STRING', description: 'O tipo de bioma do local (Ex: Floresta, Montanha).' },
-                    atmosphere: { type: 'STRING', description: 'A atmosfera predominante do local (Ex: Misteriosa, Pacífica).' },
-                    description: { type: 'STRING', description: `Uma descrição detalhada do local, sua aparência, sons, cheiros e a sensação geral que ele transmite.` },
-                    pointsOfInterest: { type: 'STRING', description: `Uma lista e breve descrição dos pontos de interesse no local. Se não solicitado, deixe em branco.` }
+                    // FIX: Used Type.STRING enum for all properties.
+                    name: { type: Type.STRING, description: 'Um nome evocativo e apropriado para o local em português (Ex: Floresta do Eco Sussurrante, Vila da Cerejeira de Ferro).' },
+                    biome: { type: Type.STRING, description: 'O tipo de bioma do local (Ex: Floresta, Montanha).' },
+                    atmosphere: { type: Type.STRING, description: 'A atmosfera predominante do local (Ex: Misteriosa, Pacífica).' },
+                    description: { type: Type.STRING, description: `Uma descrição detalhada do local, sua aparência, sons, cheiros e a sensação geral que ele transmite.` },
+                    pointsOfInterest: { type: Type.STRING, description: `Uma lista e breve descrição dos pontos de interesse no local. Se não solicitado, deixe em branco.` }
                 },
                 required: ['name', 'biome', 'atmosphere', 'description', 'pointsOfInterest']
             };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            // FIX: Refactored generateContent call to use the modern SDK structure.
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: fullPrompt,
                 config: {
                     responseMimeType: "application/json",
@@ -81,7 +87,9 @@ const LocationsInterface: React.FC = () => {
                 }
             });
 
-            const parsedResponse = JSON.parse(response.text);
+            // FIX: Used the .text accessor for a direct response.
+            const textResponse = result.text;
+            const parsedResponse = JSON.parse(textResponse);
 
             const newItem: LocationItem = {
                 id: `loc-${Date.now()}`,

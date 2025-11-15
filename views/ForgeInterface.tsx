@@ -1,93 +1,80 @@
-
-
-import React, { useState, useCallback } from 'react';
-// FIX: Corrected the import to use the official package and class name.
-import { GoogleGenAI } from "@google/genai";
+import React, { useCallback } from 'react';
+import { GoogleGenAI, Type } from "@google/genai";
 import { useCoreUI, useForge } from '../contexts/AppContext';
-import type { ForgeItem } from '../contexts/AppContext';
-import { FiltersPanel } from './forge/FiltersPanel';
+import type { ForgeItem, FilterState } from '../types';
+import { FilterPanel } from '../../components/FilterPanel';
 import { ResultsPanel } from './forge/ResultsPanel';
-import type { SelectOption } from '../components/ui/Select';
-import { FORGE_CATEGORIES, DETAIL_LEVELS } from '../constants';
+import { INITIAL_FILTER_STATE } from '../../constants';
+// FIX: Added interface export to fix error in unused views/forge/FiltersPanel.tsx
+import type { SelectOption } from '../../components/ui/Select';
 
 export interface ForgeState {
-    prompt: string;
-    category: SelectOption | null;
-    detailLevel: SelectOption | null;
-    creativity: number;
-    keywords: string;
-    styles: SelectOption[];
-    includeCanon: boolean;
+  prompt: string;
+  category: SelectOption | null;
+  detailLevel: SelectOption | null;
+  creativity: number;
+  keywords: string;
+  styles: SelectOption[];
+  includeCanon: boolean;
 }
-
-const initialForgeState: ForgeState = {
-    prompt: '',
-    category: FORGE_CATEGORIES[0],
-    detailLevel: DETAIL_LEVELS[1],
-    creativity: 50,
-    keywords: '',
-    styles: [],
-    includeCanon: true,
-};
-
 
 const ForgeInterface: React.FC = () => {
     const { isLoading, setLoading, error, setError, openDetailModal } = useCoreUI();
-    const { history, setHistory, toggleFavorite } = useForge();
-    const [filters, setFilters] = useState<ForgeState>(initialForgeState);
+    const { history, setHistory, toggleFavorite, filters, setFilters } = useForge();
 
+    const handleFilterChange = useCallback(<K extends keyof FilterState>(field: K, value: FilterState[K]) => {
+        setFilters(prev => ({ ...prev, [field]: value }));
+    }, [setFilters]);
+    
     const handleForge = useCallback(async () => {
         setLoading(true);
         setError(null);
 
         try {
             if (!process.env.API_KEY) {
-                throw new Error("A chave de API do Google Gemini não foi configurada. Defina a variável de ambiente API_KEY.");
+                throw new Error("A chave de API do Google Gemini não foi configurada.");
             }
-            if (!filters.prompt || !filters.category) {
-                throw new Error("Por favor, descreva sua ideia e selecione uma categoria para forjar.");
+            if (!filters.promptModifier) {
+                 throw new Error("Por favor, descreva sua ideia no Modificador de Prompt.");
             }
-
-            const styleText = filters.styles.length > 0 ? `com os seguintes estilos: ${filters.styles.map(s => s.label).join(', ')}` : '';
-            const keywordsText = filters.keywords ? `incorporando as palavras-chave: ${filters.keywords}` : '';
-            const canonText = filters.includeCanon ? 'Sinta-se à vontade para usar elementos e personagens canônicos do universo de Kimetsu no Yaiba.' : 'Evite usar personagens ou elementos canônicos existentes. Crie algo totalmente original dentro da temática.';
 
             const fullPrompt = `
               Você é um mestre contador de histórias e especialista no universo de Kimetsu no Yaiba.
               Sua tarefa é gerar uma nova ideia criativa com base nos seguintes parâmetros:
     
-              - **Categoria:** ${filters.category?.label}
-              - **Ideia Principal:** ${filters.prompt}
-              - **Nível de Detalhe Requerido:** ${filters.detailLevel?.label}
-              ${styleText}
-              ${keywordsText}
-              - **Regra Canônica:** ${canonText}
+              - **Categoria:** ${filters.category}
+              - **Raridade:** ${filters.rarity}
+              - **Nível Sugerido:** ${filters.level}
+              - **Temática(s):** ${filters.thematics.join(', ') || 'Nenhuma'}
+              - **Inspiração Cultural:** ${filters.country} / ${filters.era}
+              - **Tonalidade:** ${filters.tonalidade}
+              - **Instrução Adicional:** ${filters.promptModifier}
     
-              Gere uma resposta criativa e bem estruturada.
+              Gere uma resposta criativa e bem estruturada em formato JSON com um título ("title") e uma descrição ("description").
             `;
             
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
             
             const responseSchema = {
-                type: 'OBJECT',
+                type: Type.OBJECT,
                 properties: {
-                    title: { type: 'STRING', description: 'Um título criativo e curto para a ideia gerada, em português.' },
-                    description: { type: 'STRING', description: `Uma descrição detalhada da ideia gerada em português, seguindo o nível de detalhe "${filters.detailLevel?.label}".` }
+                    title: { type: Type.STRING, description: 'Um título criativo e curto para a ideia gerada, em português.' },
+                    description: { type: Type.STRING, description: `Uma descrição detalhada da ideia gerada em português.` }
                 },
                 required: ['title', 'description']
             };
 
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+            const result = await ai.models.generateContent({
+                model: "gemini-2.5-flash",
                 contents: fullPrompt,
                 config: {
                     responseMimeType: "application/json",
                     responseSchema: responseSchema,
-                    temperature: filters.creativity / 100, // Scale 0-100 slider to 0-1 range
+                    temperature: 0.8,
                 }
             });
 
-            const textResponse = response.text;
+            const textResponse = result.text;
             let parsedResponse: { title: string; description: string; };
 
             try {
@@ -123,13 +110,16 @@ const ForgeInterface: React.FC = () => {
     
     return (
         <div className='flex-grow flex flex-col md:flex-row h-full overflow-hidden'>
-            <FiltersPanel 
-                filters={filters}
-                setFilters={setFilters}
-                onForge={handleForge}
-                isLoading={isLoading}
-                onClear={() => setFilters(initialForgeState)}
-            />
+            <aside className="w-full md:w-1/3 lg:w-1/4 h-full flex flex-col bg-bg-secondary border-r border-border-color overflow-y-auto">
+                <FilterPanel 
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                    onGenerate={handleForge}
+                    isLoading={isLoading}
+                    onReset={() => setFilters(INITIAL_FILTER_STATE)}
+                    allowedCategories={['Arma', 'Acessório', 'Caçador', 'Inimigo/Oni', 'Kekkijutsu', 'Respiração', 'Missões', 'NPC', 'Evento', 'Local/Cenário', 'Mitologia', 'História Antiga', 'Guerra de Clãs']}
+                />
+            </aside>
             <ResultsPanel
                 results={history}
                 isLoading={isLoading}

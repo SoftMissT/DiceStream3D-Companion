@@ -1,7 +1,6 @@
 import React from 'react';
 
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
-// FIX: Added 'icon' to the ButtonSize type to support icon-only buttons.
 type ButtonSize = 'sm' | 'md' | 'lg' | 'icon';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -19,7 +18,6 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       sm: 'px-3 py-1.5 text-xs',
       md: 'px-4 py-2 text-sm',
       lg: 'px-6 py-3 text-base',
-      // FIX: Added styles for the 'icon' size.
       icon: 'h-9 w-9',
     };
 
