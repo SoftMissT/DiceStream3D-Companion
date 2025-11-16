@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useCoreUI, useForge } from '../contexts/AppContext';
 import type { ForgeItem, FilterState } from '../types';
 import { FilterPanel } from '../components/FilterPanel';
@@ -18,7 +18,10 @@ export interface ForgeState {
 
 const ForgeInterface: React.FC = () => {
     const { isLoading, setLoading, error, setError, openDetailModal } = useCoreUI();
-    const { history, setHistory, toggleFavorite, filters, setFilters } = useForge();
+    // FIX: Removed `filters` and `setFilters` from useForge as they are not provided by the context.
+    const { history, setHistory, toggleFavorite } = useForge();
+    // FIX: Added local state for filters to manage form state within this component, consistent with other interfaces.
+    const [filters, setFilters] = useState<FilterState>(INITIAL_FILTER_STATE);
     
     const handleForge = useCallback(async () => {
         setLoading(true);

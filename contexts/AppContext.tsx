@@ -1,9 +1,20 @@
-
-
-
-
-import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback, useEffect } from 'react';
-import type { View, CharacterItem, TechniqueItem, LocationItem, ConflictItem, MasterToolItem, AlchemistItem, CosmakerItem, FilmmakerItem, User, ApiKey, ForgeItem, FilterState } from '../types';
+import React, { createContext, useContext, useState, useMemo, ReactNode, useCallback } from 'react';
+import type { 
+  View, 
+  CharacterItem, 
+  TechniqueItem, 
+  LocationItem, 
+  ConflictItem, 
+  MasterToolItem, 
+  AlchemistItem, 
+  CosmakerItem, 
+  FilmmakerItem, 
+  User, 
+  ForgeItem, 
+  FilterState, 
+  GuerraDeClasItem,
+  BaseItem
+} from '../types';
 import { INITIAL_FILTER_STATE } from '../constants';
 
 // --- CoreUI Context ---
@@ -29,8 +40,7 @@ interface CoreUIContextType {
 
 const CoreUIContext = createContext<CoreUIContextType | undefined>(undefined);
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function CoreUIProvider({ children }: { children?: ReactNode }) {
+export function CoreUIProvider({ children }: { children: ReactNode }) {
   const [activeView, setActiveView] = useState<View>('forge');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [isDetailModalOpen, setDetailModalOpen] = useState(false);
@@ -72,7 +82,21 @@ export function CoreUIProvider({ children }: { children?: ReactNode }) {
     error,
     setError,
     themeClass: `view-${activeView}`,
-  }), [activeView, selectedItem, isDetailModalOpen, isAboutModalOpen, isApiKeysModalOpen, isLoading, error, openDetailModal, closeDetailModal, openAboutModal, closeAboutModal, openApiKeysModal, closeApiKeysModal]);
+  }), [
+    activeView, 
+    selectedItem, 
+    isDetailModalOpen, 
+    isAboutModalOpen, 
+    isApiKeysModalOpen, 
+    isLoading, 
+    error, 
+    openDetailModal, 
+    closeDetailModal, 
+    openAboutModal, 
+    closeAboutModal, 
+    openApiKeysModal, 
+    closeApiKeysModal
+  ]);
 
   return <CoreUIContext.Provider value={value}>{children}</CoreUIContext.Provider>;
 }
@@ -83,55 +107,45 @@ export function useCoreUI() {
     throw new Error('useCoreUI must be used within a CoreUIProvider');
   }
   return context;
-};
+}
 
 // --- Auth Context ---
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  authLoading: boolean;
   handleLoginClick: () => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function AuthProvider({ children }: { children?: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>({
+    id: 'mockuser_123',
+    username: 'Tanjiro Kamado',
+    avatar: 'https://i.imgur.com/L5z2dgE.png'
+  });
+  const [authLoading] = useState(false);
   const isAuthenticated = !!user;
 
-  useEffect(() => {
-    // Check for user session on initial load
-    const checkUser = async () => {
-      const res = await fetch('/api/user');
-      const data = await res.json();
-      if (data.isLoggedIn) {
-        setUser({ id: data.id, name: data.username, email: '' }); // email is not available from this endpoint
-      }
-    };
-    checkUser();
+  const handleLoginClick = useCallback(() => {
+    console.log('Login clicked - implement Discord OAuth here');
+    // Implementar lógica de login Discord aqui
   }, []);
 
-  const handleLoginClick = useCallback(async () => {
-    try {
-        const res = await fetch('/api/auth/discord/url');
-        const data = await res.json();
-        if (data.url) {
-            window.location.href = data.url;
-        } else {
-            console.error("Não foi possível obter a URL de login do Discord.");
-        }
-    } catch (error) {
-        console.error("Erro ao tentar fazer login com o Discord:", error);
-    }
+  const logout = useCallback(() => {
+    setUser(null);
+    console.log('User logged out');
   }, []);
 
-  const logout = useCallback(async () => {
-      await fetch('/api/logout');
-      setUser(null)
-  }, []);
-
-  const value = useMemo(() => ({ user, isAuthenticated, handleLoginClick, logout }), [user, isAuthenticated, handleLoginClick, logout]);
+  const value = useMemo(() => ({ 
+    user, 
+    isAuthenticated, 
+    authLoading, 
+    handleLoginClick, 
+    logout 
+  }), [user, isAuthenticated, authLoading, handleLoginClick, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -142,7 +156,7 @@ export function useAuth() {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}
 
 // --- ApiKeys Context ---
 interface ApiKeysContextType {
@@ -152,21 +166,52 @@ interface ApiKeysContextType {
   setOpenaiApiKey: (key: string) => void;
   deepseekApiKey: string;
   setDeepseekApiKey: (key: string) => void;
+  saveKeys: () => Promise<void>;
 }
 
 const ApiKeysContext = createContext<ApiKeysContextType | undefined>(undefined);
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function ApiKeysProvider({ children }: { children?: ReactNode }) {
-  const [geminiApiKey, setGeminiApiKey] = useState('');
-  const [openaiApiKey, setOpenaiApiKey] = useState('');
-  const [deepseekApiKey, setDeepseekApiKey] = useState('');
+export function ApiKeysProvider({ children }: { children: ReactNode }) {
+  // Carregar keys do localStorage
+  const [geminiApiKey, setGeminiApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('gemini_api_key') || '';
+    }
+    return '';
+  });
+  
+  const [openaiApiKey, setOpenaiApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('openai_api_key') || '';
+    }
+    return '';
+  });
+  
+  const [deepseekApiKey, setDeepseekApiKey] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('deepseek_api_key') || '';
+    }
+    return '';
+  });
+
+  const saveKeys = useCallback(async () => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gemini_api_key', geminiApiKey);
+      localStorage.setItem('openai_api_key', openaiApiKey);
+      localStorage.setItem('deepseek_api_key', deepseekApiKey);
+      console.log('API keys saved to localStorage');
+    }
+  }, [geminiApiKey, openaiApiKey, deepseekApiKey]);
   
   const value = useMemo(() => ({ 
-    geminiApiKey, setGeminiApiKey,
-    openaiApiKey, setOpenaiApiKey,
-    deepseekApiKey, setDeepseekApiKey,
-  }), [geminiApiKey, openaiApiKey, deepseekApiKey]);
+    geminiApiKey, 
+    setGeminiApiKey,
+    openaiApiKey, 
+    setOpenaiApiKey,
+    deepseekApiKey, 
+    setDeepseekApiKey,
+    saveKeys,
+  }), [geminiApiKey, openaiApiKey, deepseekApiKey, saveKeys]);
 
   return <ApiKeysContext.Provider value={value}>{children}</ApiKeysContext.Provider>;
 }
@@ -177,27 +222,24 @@ export function useApiKeys() {
     throw new Error('useApiKeys must be used within an ApiKeysProvider');
   }
   return context;
-};
-
-// --- Forge Context ---
-interface ForgeContextType {
-  filters: FilterState;
-  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
-  history: ForgeItem[];
-  setHistory: React.Dispatch<React.SetStateAction<ForgeItem[]>>;
-  favorites: ForgeItem[];
-  toggleFavorite: (item: ForgeItem) => void;
 }
 
-const ForgeContext = createContext<ForgeContextType | undefined>(undefined);
+// --- Generic Context Factory ---
+function createItemContext<T extends BaseItem>(contextName: string) {
+  interface ItemContextType {
+    history: T[];
+    setHistory: React.Dispatch<React.SetStateAction<T[]>>;
+    favorites: T[];
+    toggleFavorite: (item: T) => void;
+  }
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function ForgeProvider({ children }: { children?: ReactNode }) {
-    const [filters, setFilters] = useState<FilterState>(INITIAL_FILTER_STATE);
-    const [history, setHistory] = useState<ForgeItem[]>([]);
-    const [favorites, setFavorites] = useState<ForgeItem[]>([]);
+  const ItemContext = createContext<ItemContextType | undefined>(undefined);
 
-    const toggleFavorite = useCallback((itemToToggle: ForgeItem) => {
+  function Provider({ children }: { children: ReactNode }) {
+    const [history, setHistory] = useState<T[]>([]);
+    const [favorites, setFavorites] = useState<T[]>([]);
+
+    const toggleFavorite = useCallback((itemToToggle: T) => {
       setFavorites(prev => {
         const isFavorite = prev.some(item => item.id === itemToToggle.id);
         if (isFavorite) {
@@ -206,53 +248,9 @@ export function ForgeProvider({ children }: { children?: ReactNode }) {
           return [...prev, { ...itemToToggle, isFavorite: true }];
         }
       });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ 
-      filters, 
-      setFilters, 
-      history, 
-      setHistory,
-      favorites, 
-      toggleFavorite,
-    }), [filters, history, favorites, toggleFavorite]);
-    
-    return <ForgeContext.Provider value={value}>{children}</ForgeContext.Provider>;
-}
-export function useForge() {
-    const context = useContext(ForgeContext);
-    if (!context) {
-      throw new Error('useForge must be used within a ForgeProvider');
-    }
-    return context;
-}
-
-// --- Conflicts Context ---
-interface ConflictsContextType {
-  history: ConflictItem[];
-  setHistory: React.Dispatch<React.SetStateAction<ConflictItem[]>>;
-  favorites: ConflictItem[];
-  toggleFavorite: (item: ConflictItem) => void;
-}
-
-const ConflictsContext = createContext<ConflictsContextType | undefined>(undefined);
-
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function ConflictsProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<ConflictItem[]>([]);
-    const [favorites, setFavorites] = useState<ConflictItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: ConflictItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
+      setHistory(prev => prev.map(item => 
+        item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item
+      ));
     }, []);
 
     const value = useMemo(() => ({ 
@@ -262,302 +260,60 @@ export function ConflictsProvider({ children }: { children?: ReactNode }) {
       toggleFavorite,
     }), [history, favorites, toggleFavorite]);
     
-    return <ConflictsContext.Provider value={value}>{children}</ConflictsContext.Provider>;
-}
-export function useConflicts() {
-    const context = useContext(ConflictsContext);
+    return <ItemContext.Provider value={value}>{children}</ItemContext.Provider>;
+  }
+
+  function useItem() {
+    const context = useContext(ItemContext);
     if (!context) {
-      throw new Error('useConflicts must be used within a ConflictsProvider');
+      throw new Error(`useItem must be used within a ${contextName}Provider`);
     }
     return context;
+  }
+
+  return { Provider, useItem };
 }
 
+// --- Create all contexts ---
+const ForgeContext = createItemContext<ForgeItem>('Forge');
+export const ForgeProvider = ForgeContext.Provider;
+export const useForge = ForgeContext.useItem;
 
-// --- Characters Context ---
-interface CharactersContextType {
-  history: CharacterItem[];
-  setHistory: React.Dispatch<React.SetStateAction<CharacterItem[]>>;
-  favorites: CharacterItem[];
-  toggleFavorite: (item: CharacterItem) => void;
-}
+const ConflictsContext = createItemContext<ConflictItem>('Conflicts');
+export const ConflictsProvider = ConflictsContext.Provider;
+export const useConflicts = ConflictsContext.useItem;
 
-const CharactersContext = createContext<CharactersContextType | undefined>(undefined);
+const GuerraDeClasContext = createItemContext<GuerraDeClasItem>('GuerraDeClas');
+export const GuerraDeClasProvider = GuerraDeClasContext.Provider;
+export const useGuerraDeClas = GuerraDeClasContext.useItem;
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function CharactersProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<CharacterItem[]>([]);
-    const [favorites, setFavorites] = useState<CharacterItem[]>([]);
+const CharactersContext = createItemContext<CharacterItem>('Characters');
+export const CharactersProvider = CharactersContext.Provider;
+export const useCharacters = CharactersContext.useItem;
 
-    const toggleFavorite = useCallback((itemToToggle: CharacterItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
+const TechniquesContext = createItemContext<TechniqueItem>('Techniques');
+export const TechniquesProvider = TechniquesContext.Provider;
+export const useTechniques = TechniquesContext.useItem;
 
-    const value = useMemo(() => ({ 
-      history, 
-      setHistory,
-      favorites, 
-      toggleFavorite,
-    }), [history, favorites, toggleFavorite]);
-    
-    return <CharactersContext.Provider value={value}>{children}</CharactersContext.Provider>;
-}
-export function useCharacters() {
-    const context = useContext(CharactersContext);
-    if (!context) {
-      throw new Error('useCharacters must be used within a CharactersProvider');
-    }
-    return context;
-}
+const LocationsContext = createItemContext<LocationItem>('Locations');
+export const LocationsProvider = LocationsContext.Provider;
+export const useLocations = LocationsContext.useItem;
 
-// --- Techniques Context ---
-interface TechniquesContextType {
-  history: TechniqueItem[];
-  setHistory: React.Dispatch<React.SetStateAction<TechniqueItem[]>>;
-  favorites: TechniqueItem[];
-  toggleFavorite: (item: TechniqueItem) => void;
-}
+const MasterToolsContext = createItemContext<MasterToolItem>('MasterTools');
+export const MasterToolsProvider = MasterToolsContext.Provider;
+export const useMasterTools = MasterToolsContext.useItem;
 
-const TechniquesContext = createContext<TechniquesContextType | undefined>(undefined);
+const AlchemyContext = createItemContext<AlchemistItem>('Alchemy');
+export const AlchemyProvider = AlchemyContext.Provider;
+export const useAlchemy = AlchemyContext.useItem;
 
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function TechniquesProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<TechniqueItem[]>([]);
-    const [favorites, setFavorites] = useState<TechniqueItem[]>([]);
+const CosmakerContext = createItemContext<CosmakerItem>('Cosmaker');
+export const CosmakerProvider = CosmakerContext.Provider;
+export const useCosmaker = CosmakerContext.useItem;
 
-    const toggleFavorite = useCallback((itemToToggle: TechniqueItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ 
-      history, 
-      setHistory,
-      favorites, 
-      toggleFavorite,
-    }), [history, favorites, toggleFavorite]);
-    
-    return <TechniquesContext.Provider value={value}>{children}</TechniquesContext.Provider>;
-}
-export function useTechniques() {
-    const context = useContext(TechniquesContext);
-    if (!context) {
-      throw new Error('useTechniques must be used within a TechniquesProvider');
-    }
-    return context;
-}
-
-// --- Locations Context ---
-interface LocationsContextType {
-  history: LocationItem[];
-  setHistory: React.Dispatch<React.SetStateAction<LocationItem[]>>;
-  favorites: LocationItem[];
-  toggleFavorite: (item: LocationItem) => void;
-}
-
-const LocationsContext = createContext<LocationsContextType | undefined>(undefined);
-
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function LocationsProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<LocationItem[]>([]);
-    const [favorites, setFavorites] = useState<LocationItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: LocationItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ 
-      history, 
-      setHistory,
-      favorites, 
-      toggleFavorite,
-    }), [history, favorites, toggleFavorite]);
-    
-    return <LocationsContext.Provider value={value}>{children}</LocationsContext.Provider>;
-}
-export function useLocations() {
-    const context = useContext(LocationsContext);
-    if (!context) {
-      throw new Error('useLocations must be used within a LocationsProvider');
-    }
-    return context;
-}
-
-// --- MasterTools Context ---
-interface MasterToolsContextType {
-  history: MasterToolItem[];
-  setHistory: React.Dispatch<React.SetStateAction<MasterToolItem[]>>;
-  favorites: MasterToolItem[];
-  toggleFavorite: (item: MasterToolItem) => void;
-}
-
-const MasterToolsContext = createContext<MasterToolsContextType | undefined>(undefined);
-
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function MasterToolsProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<MasterToolItem[]>([]);
-    const [favorites, setFavorites] = useState<MasterToolItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: MasterToolItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({
-      history,
-      setHistory,
-      favorites,
-      toggleFavorite,
-    }), [history, favorites, toggleFavorite]);
-
-    return <MasterToolsContext.Provider value={value}>{children}</MasterToolsContext.Provider>;
-}
-export function useMasterTools() {
-    const context = useContext(MasterToolsContext);
-    if (!context) {
-      throw new Error('useMasterTools must be used within a MasterToolsProvider');
-    }
-    return context;
-}
-
-
-// --- Alchemy Context ---
-interface AlchemyContextType {
-  history: AlchemistItem[];
-  setHistory: React.Dispatch<React.SetStateAction<AlchemistItem[]>>;
-  favorites: AlchemistItem[];
-  toggleFavorite: (item: AlchemistItem) => void;
-}
-const AlchemyContext = createContext<AlchemyContextType | undefined>(undefined);
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function AlchemyProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<AlchemistItem[]>([]);
-    const [favorites, setFavorites] = useState<AlchemistItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: AlchemistItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
-    return <AlchemyContext.Provider value={value}>{children}</AlchemyContext.Provider>;
-}
-export function useAlchemy() {
-    const context = useContext(AlchemyContext);
-    if (!context) {
-      throw new Error('useAlchemy must be used within an AlchemyProvider');
-    }
-    return context;
-}
-
-// --- Cosmaker Context ---
-interface CosmakerContextType {
-  history: CosmakerItem[];
-  setHistory: React.Dispatch<React.SetStateAction<CosmakerItem[]>>;
-  favorites: CosmakerItem[];
-  toggleFavorite: (item: CosmakerItem) => void;
-}
-const CosmakerContext = createContext<CosmakerContextType | undefined>(undefined);
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function CosmakerProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<CosmakerItem[]>([]);
-    const [favorites, setFavorites] = useState<CosmakerItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: CosmakerItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
-    return <CosmakerContext.Provider value={value}>{children}</CosmakerContext.Provider>;
-}
-export function useCosmaker() {
-    const context = useContext(CosmakerContext);
-    if (!context) {
-      throw new Error('useCosmaker must be used within a CosmakerProvider');
-    }
-    return context;
-}
-
-// --- Filmmaker Context ---
-interface FilmmakerContextType {
-  history: FilmmakerItem[];
-  setHistory: React.Dispatch<React.SetStateAction<FilmmakerItem[]>>;
-  favorites: FilmmakerItem[];
-  toggleFavorite: (item: FilmmakerItem) => void;
-}
-const FilmmakerContext = createContext<FilmmakerContextType | undefined>(undefined);
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function FilmmakerProvider({ children }: { children?: ReactNode }) {
-    const [history, setHistory] = useState<FilmmakerItem[]>([]);
-    const [favorites, setFavorites] = useState<FilmmakerItem[]>([]);
-
-    const toggleFavorite = useCallback((itemToToggle: FilmmakerItem) => {
-      setFavorites(prev => {
-        const isFavorite = prev.some(item => item.id === itemToToggle.id);
-        if (isFavorite) {
-          return prev.filter(item => item.id !== itemToToggle.id);
-        } else {
-          return [...prev, { ...itemToToggle, isFavorite: true }];
-        }
-      });
-      setHistory(prev => prev.map(item => item.id === itemToToggle.id ? { ...item, isFavorite: !item.isFavorite } : item));
-    }, []);
-
-    const value = useMemo(() => ({ history, setHistory, favorites, toggleFavorite }), [history, favorites, toggleFavorite]);
-    return <FilmmakerContext.Provider value={value}>{children}</FilmmakerContext.Provider>;
-}
-export function useFilmmaker() {
-    const context = useContext(FilmmakerContext);
-    if (!context) {
-      throw new Error('useFilmmaker must be used within a FilmmakerProvider');
-    }
-    return context;
-}
-
+const FilmmakerContext = createItemContext<FilmmakerItem>('Filmmaker');
+export const FilmmakerProvider = FilmmakerContext.Provider;
+export const useFilmmaker = FilmmakerContext.useItem;
 
 // --- Usage Context ---
 interface UsageContextType {
@@ -566,24 +322,33 @@ interface UsageContextType {
   isLimitReached: boolean;
   incrementUsage: () => void;
 }
+
 const UsageContext = createContext<UsageContextType | undefined>(undefined);
-// FIX: Made children prop optional to resolve incorrect TypeScript errors.
-export function UsageProvider({ children }: { children?: ReactNode }) {
-    const [dailyUsage, setDailyUsage] = useState(0);
-    const usageLimit = 100;
-    const isLimitReached = dailyUsage >= usageLimit;
-    const incrementUsage = useCallback(() => setDailyUsage(c => c + 1), []);
-    const value = useMemo(() => ({ dailyUsage, usageLimit, isLimitReached, incrementUsage }), [dailyUsage, usageLimit, isLimitReached, incrementUsage]);
-    return <UsageContext.Provider value={value}>{children}</UsageContext.Provider>;
-}
-export function useUsage() {
-    const context = useContext(UsageContext);
-    if (!context) {
-      throw new Error('useUsage must be used within a UsageProvider');
-    }
-    return context;
+
+export function UsageProvider({ children }: { children: ReactNode }) {
+  const [dailyUsage, setDailyUsage] = useState(0);
+  const usageLimit = 100;
+  const isLimitReached = dailyUsage >= usageLimit;
+  
+  const incrementUsage = useCallback(() => setDailyUsage(c => c + 1), []);
+  
+  const value = useMemo(() => ({ 
+    dailyUsage, 
+    usageLimit, 
+    isLimitReached, 
+    incrementUsage 
+  }), [dailyUsage, usageLimit, isLimitReached, incrementUsage]);
+  
+  return <UsageContext.Provider value={value}>{children}</UsageContext.Provider>;
 }
 
+export function useUsage() {
+  const context = useContext(UsageContext);
+  if (!context) {
+    throw new Error('useUsage must be used within a UsageProvider');
+  }
+  return context;
+}
 
 // --- AppProvider (Composer) ---
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -593,23 +358,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
         <ApiKeysProvider>
           <ForgeProvider>
             <ConflictsProvider>
-              <CharactersProvider>
-                <TechniquesProvider>
-                  <LocationsProvider>
-                    <MasterToolsProvider>
-                      <AlchemyProvider>
-                        <CosmakerProvider>
+              <GuerraDeClasProvider>
+                <CharactersProvider>
+                  <TechniquesProvider>
+                    <LocationsProvider>
+                      <MasterToolsProvider>
+                        <AlchemyProvider>
+                          <CosmakerProvider>
                             <FilmmakerProvider>
-                                <UsageProvider>
-                                    {children}
-                                </UsageProvider>
+                              <UsageProvider>
+                                {children}
+                              </UsageProvider>
                             </FilmmakerProvider>
-                        </CosmakerProvider>
-                      </AlchemyProvider>
-                    </MasterToolsProvider>
-                  </LocationsProvider>
-                </TechniquesProvider>
-              </CharactersProvider>
+                          </CosmakerProvider>
+                        </AlchemyProvider>
+                      </MasterToolsProvider>
+                    </LocationsProvider>
+                  </TechniquesProvider>
+                </CharactersProvider>
+              </GuerraDeClasProvider>
             </ConflictsProvider>
           </ForgeProvider>
         </ApiKeysProvider>

@@ -1,6 +1,12 @@
 // FIX: Import FC type from 'react' to resolve "Cannot find namespace 'JSX'" error.
 import type { FC } from 'react';
 
+// NEW: Base interface for all generated items.
+export interface BaseItem {
+  id: string;
+  isFavorite?: boolean;
+}
+
 export type View =
   | 'forge'
   | 'conflicts'
@@ -18,18 +24,15 @@ export interface ViewItem {
   icon: FC<{ className?: string }>;
 }
 
-export type ConflictItem = {
-  id: string;
+export type ConflictItem = BaseItem & {
   name: string;
   synopsis: string;
   scale: string;
   missionType: string;
   factionsInvolved: string;
-  isFavorite?: boolean;
 };
 
-export type CharacterItem = {
-  id: string;
+export type CharacterItem = BaseItem & {
   name: string;
   affiliation: string;
   rank: string;
@@ -37,62 +40,58 @@ export type CharacterItem = {
   personality: string;
   backstory: string;
   abilities: string;
-  isFavorite?: boolean;
 };
 
-export type TechniqueItem = {
-  id: string;
+export type TechniqueItem = BaseItem & {
   name: string;
   type: string;
   baseElement: string;
   description: string;
-  isFavorite?: boolean;
 };
 
-export type LocationItem = {
-  id: string;
+export type LocationItem = BaseItem & {
   name: string;
   biome: string;
   atmosphere: string;
   description: string;
   pointsOfInterest: string;
-  isFavorite?: boolean;
 };
 
-export type MasterToolItem = {
-  id: string;
+export type MasterToolItem = BaseItem & {
   content: string;
   toolType: string;
-  isFavorite?: boolean;
 };
 
-export type AlchemistItem = {
-  id: string;
+export type AlchemistItem = BaseItem & {
   response: string;
   prompt: string;
   parameters: { [key: string]: any };
-  isFavorite?: boolean;
 };
 
-export type CosmakerItem = {
-  id: string;
+export type CosmakerItem = BaseItem & {
   prompt: string;
   imageUrl: string; // Base64 data URL
-  isFavorite?: boolean;
 };
 
-export type FilmmakerItem = {
-  id: string;
+export type FilmmakerItem = BaseItem & {
   prompt: string;
   description: string;
-  isFavorite?: boolean;
 };
+
+// NEW: Type for Guerra de Clãs
+export type GuerraDeClasItem = BaseItem & {
+  title: string;
+  summary: string;
+  outcome: string;
+  keyEvents: string;
+};
+
 
 // Types for Auth and API Keys
 export type User = {
   id: string;
-  name: string;
-  email: string;
+  username: string; // Changed from 'name' for consistency with session
+  avatar: string;
 };
 
 export type ApiKey = {
@@ -102,11 +101,9 @@ export type ApiKey = {
 };
 
 // Type for the main "Forge" view
-export type ForgeItem = {
-  id: string;
+export type ForgeItem = BaseItem & {
   name: string;
   content: string;
-  isFavorite?: boolean;
 };
 
 // NEW: Unified types for the new FilterPanel
