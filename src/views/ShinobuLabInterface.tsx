@@ -1,8 +1,1 @@
-// src/views/ShinobuLabInterface.tsx
-import React from 'react';
-import { PromptEngineeringPanel } from '../components/PromptEngineeringPanel';
-
-export const ShinobuLabInterface: React.FC = () => {
-    // A aba 'alchemist' corresponde ao PromptEngineeringPanel
-    return <PromptEngineeringPanel />;
-};
+import { PlaceholderView } from '../components/PlaceholderView'; export const ShinobuLabInterface = () => <PlaceholderView title='Shinobu Lab' />;

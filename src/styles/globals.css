@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #050505;
+  --text-primary: #ffffff;
+  --accent-start: #4f46e5;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Classes utilitárias para evitar erros de @apply */
+.btn-forge { @apply bg-blue-600 text-white; }
+.btn-alchemy { @apply bg-purple-600 text-white; }
+.btn-clan_wars { @apply bg-red-600 text-white; }
+.btn-master_tools { @apply bg-green-600 text-white; }
+.btn-cosmaker { @apply bg-pink-600 text-white; }
+.btn-filmmaker { @apply bg-cyan-600 text-white; }
